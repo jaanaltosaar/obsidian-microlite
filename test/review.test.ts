@@ -21,6 +21,7 @@ const OPTS = {
 	fullBelow: 200,
 	syncThreshold: 4,
 	withMeta: true,
+	newPaths: new Set(['lorem-ipsum.md']), // the one fixture note created within the window
 };
 
 /** Collapse the two intentionally-non-deterministic bits so difflib and jsdiff can be compared:
@@ -173,5 +174,44 @@ describe('isOwnOutput', () => {
 		expect(isOwnOutput('notes/journal.md', 'microlite')).toBe(false);
 		expect(isOwnOutput('microlite-stuff/note.md', 'microlite')).toBe(false);
 		expect(isOwnOutput('journal.md', '')).toBe(false);
+	});
+});
+
+describe('opened-but-unchanged vs genuinely new', () => {
+	const base = {
+		now: 1768100000000,
+		sinceDays: 0,
+		context: 3,
+		net: true,
+		fullBelow: 0,
+		syncThreshold: 4,
+		withMeta: false,
+	};
+
+	it('omits an old note that was opened/synced but not edited (no pre, not new, no change)', () => {
+		// One in-window snapshot, no pre-window baseline, not flagged new → baseline is that same
+		// snapshot → empty diff → dropped. This is the therapy-file / opened-note case.
+		const byPath = groupByPath([{ path: 'opened.md', ts: 1768000000000, data: '# Old\n\nunchanged\n' }]);
+		const md = renderReview(byPath, base);
+		expect(md).not.toContain('## opened.md');
+	});
+
+	it('diffs an old note against its earliest in-window snapshot when it really changed', () => {
+		const byPath = groupByPath([
+			{ path: 'edited.md', ts: 1768000000000, data: '# Old\n\none\n' },
+			{ path: 'edited.md', ts: 1768000600000, data: '# Old\n\none\ntwo\n' },
+		]);
+		const md = renderReview(byPath, base);
+		expect(md).toContain('## edited.md');
+		expect(md).toContain('+two');
+		expect(md).not.toContain('(new file)'); // old file → baseline is the earliest snapshot, not empty
+	});
+
+	it('shows a genuinely new note (flagged in newPaths) as all-additions', () => {
+		const byPath = groupByPath([{ path: 'fresh.md', ts: 1768000000000, data: '# Fresh\n\nbrand new\n' }]);
+		const md = renderReview(byPath, { ...base, newPaths: new Set(['fresh.md']) });
+		expect(md).toContain('## fresh.md');
+		expect(md).toContain('### (new file) →');
+		expect(md).toContain('+# Fresh');
 	});
 });

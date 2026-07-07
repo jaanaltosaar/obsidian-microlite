@@ -34,6 +34,8 @@ export interface RenderOptions {
 	withMeta?: boolean;
 	/** Paths that have snapshots but no longer exist in the vault — listed separately, not diffed. */
 	deletedPaths?: Set<string>;
+	/** Paths whose file was created within the window — genuinely new, so diffed against empty. */
+	newPaths?: Set<string>;
 }
 
 /** path → snapshots sorted ascending by ts. */
@@ -243,6 +245,7 @@ export function renderReview(byPath: SnapshotsByPath, opts: RenderOptions): stri
 		.sort((a, b) => b[1][b[1].length - 1]!.ts - a[1][a[1].length - 1]!.ts);
 
 	const deleted = opts.deletedPaths ?? new Set<string>();
+	const newPaths = opts.newPaths ?? new Set<string>();
 	const deletedInWindow: string[] = [];
 
 	for (const [path, versions] of ranked) {
@@ -259,36 +262,46 @@ export function renderReview(byPath: SnapshotsByPath, opts: RenderOptions): stri
 			}
 		}
 		const head = inWin[inWin.length - 1]!;
-		parts.push(
-			`\n## ${path}\n\n_${inWin.length} edit(s) in window · newest ${iso(head.ts)} · ${head.data.length} chars_\n`,
-		);
+		const meta = `\n## ${path}\n\n_${inWin.length} edit(s) in window · newest ${iso(head.ts)} · ${head.data.length} chars_\n`;
 
 		if (head.data.length < fullBelow) {
+			parts.push(meta);
 			parts.push('_current content:_\n\n```markdown\n' + rstrip(head.data) + '\n```\n');
 			continue;
 		}
 
-		// Baseline = last pre-window snapshot; if there is none the note is new to the window,
-		// so diff against empty and show its whole content as additions (labelled "(new file)").
+		// Baseline: the last pre-window snapshot if we have one; otherwise the earliest in-window
+		// snapshot — UNLESS the file was created within the window (newPaths), in which case it is
+		// genuinely new and we diff against empty so its whole body shows as additions. Opening,
+		// auto-saving, or syncing an old note creates an in-window snapshot with no real change;
+		// those resolve to an empty diff and are dropped below.
 		const NEW = '(new file)';
 		type Side = { label: string; data: string };
+		const base: Side = pre
+			? { label: iso(pre.ts), data: pre.data }
+			: newPaths.has(path)
+				? { label: NEW, data: '' }
+				: { label: iso(inWin[0]!.ts), data: inWin[0]!.data };
 		let spans: Array<[Side, Side]>;
 		if (net) {
-			const base: Side = pre ? { label: iso(pre.ts), data: pre.data } : { label: NEW, data: '' };
 			spans = [[base, { label: iso(head.ts), data: head.data }]];
 		} else {
-			const chain: Side[] = pre
-				? [{ label: iso(pre.ts), data: pre.data }]
-				: [{ label: NEW, data: '' }];
-			for (const s of inWin) chain.push({ label: iso(s.ts), data: s.data });
+			// walk consecutive snapshots, prefixed by the baseline (don't re-list the earliest
+			// in-window snapshot when it already *is* the baseline).
+			const tail = pre || newPaths.has(path) ? inWin : inWin.slice(1);
+			const chain: Side[] = [base, ...tail.map((s) => ({ label: iso(s.ts), data: s.data }))];
 			spans = chain.slice(0, -1).map((s, i) => [s, chain[i + 1]!]);
 		}
+
+		const body: string[] = [];
+		let changed = false;
 		for (const [from, to] of spans) {
 			const diff = headingAwareDiff(from.data, to.data, context, from.label, to.label);
-			parts.push(
-				`### ${from.label} → ${to.label}\n\n\`\`\`diff\n${diff || '(no textual change)'}\n\`\`\`\n`,
-			);
+			if (diff) changed = true;
+			body.push(`### ${from.label} → ${to.label}\n\n\`\`\`diff\n${diff || '(no textual change)'}\n\`\`\`\n`);
 		}
+		if (!changed) continue; // opened / auto-saved / synced but not actually edited → omit
+		parts.push(meta, ...body);
 	}
 
 	if (deletedInWindow.length > 0) {

@@ -293,7 +293,9 @@ def render(
     full_below: int,
     with_meta: bool,
     sync_secs: set[int],
+    new_paths: set[str] | None = None,
 ) -> str:
+    new_paths = new_paths or set()
     parts: list[str] = []
     total = sum(len(v) for v in snaps.values())
     parts.append(
@@ -314,34 +316,50 @@ def render(
         in_win = [v for v in versions if v[0] >= cutoff_ms]
         pre = next((v for v in reversed(versions) if v[0] < cutoff_ms), None)
         head_ts, head_data = in_win[-1]
-        parts.append(
+        meta = (
             f"\n## {path}\n\n_{len(in_win)} edit(s) in window · newest {iso(head_ts)} · "
             f"{len(head_data)} chars_\n"
         )
 
         if len(head_data) < full_below:
+            parts.append(meta)
             parts.append(
                 "_current content:_\n\n```markdown\n" + head_data.rstrip() + "\n```\n"
             )
             continue
 
-        # Baseline = last pre-window snapshot; if there is none the note is new to the window,
-        # so diff against empty and show its whole content as additions (labelled "(new file)").
+        # Baseline: last pre-window snapshot if we have one; otherwise the earliest in-window
+        # snapshot — UNLESS the file was created within the window (new_paths), in which case it
+        # is genuinely new and we diff against empty ("(new file)"). Opening/auto-saving/syncing
+        # an old note makes an in-window snapshot with no real change; those diff empty and are
+        # dropped below.
         NEW = "(new file)"
-        if net:
-            base_label = iso(pre[0]) if pre else NEW
-            base_text = pre[1] if pre else ""
-            spans = [((base_label, base_text), (iso(head_ts), head_data))]
+        if pre:
+            base = (iso(pre[0]), pre[1])
+        elif path in new_paths:
+            base = (NEW, "")
         else:
-            chain = ([(iso(pre[0]), pre[1])] if pre else [(NEW, "")]) + [
-                (iso(ts), data) for ts, data in in_win
-            ]
+            base = (iso(in_win[0][0]), in_win[0][1])
+        if net:
+            spans = [(base, (iso(head_ts), head_data))]
+        else:
+            tail = in_win if (pre or path in new_paths) else in_win[1:]
+            chain = [base] + [(iso(ts), data) for ts, data in tail]
             spans = list(zip(chain, chain[1:]))
+
+        body = []
+        changed = False
         for (la, text_a), (lb, text_b) in spans:
             diff = heading_aware_diff(text_a, text_b, context, la, lb)
-            parts.append(
+            if diff:
+                changed = True
+            body.append(
                 f"### {la} → {lb}\n\n```diff\n{diff or '(no textual change)'}\n```\n"
             )
+        if not changed:
+            continue  # opened / auto-saved / synced but not actually edited → omit
+        parts.append(meta)
+        parts.extend(body)
 
     return "\n".join(parts)
 

@@ -56,15 +56,22 @@ export default class MicroliteHunksPlugin extends Plugin {
 				return;
 			}
 
+			const now = Date.now();
+			const cutoffMs = now - days * 86_400_000;
+
 			const byPath = groupByPath(records);
 			// Fold in the live on-disk content so lagging/empty snapshots don't hide a note's
 			// real current state (e.g. a note created today whose only snapshot is empty).
 			const currents = new Map<string, { mtime: number; data: string }>();
 			const deletedPaths = new Set<string>();
+			const newPaths = new Set<string>();
 			for (const path of byPath.keys()) {
 				const f = this.app.vault.getAbstractFileByPath(path);
 				if (f instanceof TFile) {
 					currents.set(path, { mtime: f.stat.mtime, data: await this.app.vault.cachedRead(f) });
+					// Genuinely new = created within the window. Opening an old note also creates an
+					// in-window snapshot, but its ctime predates the window, so it is not treated as new.
+					if (f.stat.ctime >= cutoffMs) newPaths.add(path);
 				} else {
 					deletedPaths.add(path); // has snapshots but no live file → deleted or renamed
 				}
@@ -72,7 +79,7 @@ export default class MicroliteHunksPlugin extends Plugin {
 			mergeCurrentContent(byPath, currents);
 
 			const md = renderReview(byPath, {
-				now: Date.now(),
+				now,
 				sinceDays: days,
 				context: this.settings.context,
 				net: true,
@@ -80,6 +87,7 @@ export default class MicroliteHunksPlugin extends Plugin {
 				syncThreshold: this.settings.syncThreshold,
 				withMeta: true,
 				deletedPaths,
+				newPaths,
 			});
 
 			const file = await this.writeNote(md);
