@@ -61,7 +61,9 @@ describe('renderReview', () => {
 		const idx = output.indexOf('## lorem-ipsum.md');
 		expect(idx).toBeGreaterThan(-1);
 		const section = output.slice(idx, output.indexOf('## quotes.md'));
-		expect(section).toContain('### (new file) → 2026-01-15 09:00:00');
+		expect(section).toContain('## lorem-ipsum.md — 1 edit in window');
+		expect(section).toContain('--- (new file)');
+		expect(section).toContain('+++ 2026-01-15 09:00:00');
 		expect(section).toContain('@@ -0,0 +1,5 @@ # Lorem ipsum');
 		expect(section).toContain('+# Lorem ipsum');
 		expect(section).not.toContain('single snapshot in window; no diff');
@@ -220,8 +222,8 @@ describe('opened-but-unchanged vs genuinely new', () => {
 	it('shows a genuinely new note (flagged in newPaths) as all-additions', () => {
 		const byPath = groupByPath([{ path: 'fresh.md', ts: 1768000000000, data: '# Fresh\n\nbrand new\n' }]);
 		const md = renderReview(byPath, { ...base, newPaths: new Set(['fresh.md']) });
-		expect(md).toContain('## fresh.md');
-		expect(md).toContain('### (new file) →');
+		expect(md).toContain('## fresh.md — 1 edit in window');
+		expect(md).toContain('--- (new file)');
 		expect(md).toContain('+# Fresh');
 	});
 });

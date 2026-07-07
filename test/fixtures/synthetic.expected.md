@@ -18,11 +18,7 @@ _These notes changed elsewhere and synced in at one timestamp; their diffs still
 - 2026-01-13 03:00 — 4 notes captured together
 
 
-## journal.md
-
-_2 edit(s) in window · newest 2026-01-15 11:30:00 · 326 chars_
-
-### 2026-01-07 09:00:00 → 2026-01-15 11:30:00
+## journal.md — 2 edits in window
 
 ```diff
 --- 2026-01-07 09:00:00
@@ -40,11 +36,7 @@ _2 edit(s) in window · newest 2026-01-15 11:30:00 · 326 chars_
 ```
 
 
-## lorem-ipsum.md
-
-_1 edit(s) in window · newest 2026-01-15 09:00:00 · 251 chars_
-
-### (new file) → 2026-01-15 09:00:00
+## lorem-ipsum.md — 1 edit in window
 
 ```diff
 --- (new file)
@@ -58,9 +50,7 @@ _1 edit(s) in window · newest 2026-01-15 09:00:00 · 251 chars_
 ```
 
 
-## quotes.md
-
-_1 edit(s) in window · newest 2026-01-14 09:00:00 · 69 chars_
+## quotes.md — 1 edit in window
 
 _current content:_
 
@@ -71,9 +61,7 @@ _current content:_
 ```
 
 
-## sync-a.md
-
-_1 edit(s) in window · newest 2026-01-13 03:00:00 · 68 chars_
+## sync-a.md — 1 edit in window
 
 _current content:_
 
@@ -84,9 +72,7 @@ This note changed on another device and synced in.
 ```
 
 
-## sync-b.md
-
-_1 edit(s) in window · newest 2026-01-13 03:00:00 · 68 chars_
+## sync-b.md — 1 edit in window
 
 _current content:_
 
@@ -97,9 +83,7 @@ This note changed on another device and synced in.
 ```
 
 
-## sync-c.md
-
-_1 edit(s) in window · newest 2026-01-13 03:00:00 · 68 chars_
+## sync-c.md — 1 edit in window
 
 _current content:_
 
@@ -110,9 +94,7 @@ This note changed on another device and synced in.
 ```
 
 
-## sync-d.md
-
-_1 edit(s) in window · newest 2026-01-13 03:00:00 · 68 chars_
+## sync-d.md — 1 edit in window
 
 _current content:_
 

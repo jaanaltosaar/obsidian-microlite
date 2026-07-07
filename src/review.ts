@@ -278,10 +278,12 @@ export function renderReview(byPath: SnapshotsByPath, opts: RenderOptions): stri
 			}
 		}
 		const head = inWin[inWin.length - 1]!;
-		const meta = `\n## ${path}\n\n_${inWin.length} edit(s) in window · newest ${iso(head.ts)} · ${head.data.length} chars_\n`;
+		const editN = inWin.length;
+		// One-line title; per-diff timestamps live in the diff's --- / +++ header rows.
+		const title = `\n## ${path} — ${editN} edit${editN === 1 ? '' : 's'} in window\n`;
 
 		if (head.data.length < fullBelow) {
-			parts.push(meta);
+			parts.push(title);
 			parts.push('_current content:_\n\n```markdown\n' + rstrip(head.data) + '\n```\n');
 			continue;
 		}
@@ -316,10 +318,10 @@ export function renderReview(byPath: SnapshotsByPath, opts: RenderOptions): stri
 			// A change only counts if it survives whitespace/encoding normalization — a pure
 			// whitespace rewrite (full delete + identical readd) is not a real edit.
 			if (diff && normalizeForCompare(from.data) !== normalizeForCompare(to.data)) changed = true;
-			body.push(`### ${from.label} → ${to.label}\n\n\`\`\`diff\n${diff || '(no textual change)'}\n\`\`\`\n`);
+			body.push(`\`\`\`diff\n${diff || '(no textual change)'}\n\`\`\`\n`);
 		}
 		if (!changed) continue; // opened / auto-saved / synced but not actually edited → omit
-		parts.push(meta, ...body);
+		parts.push(title, ...body);
 	}
 
 	if (deletedInWindow.length > 0) {

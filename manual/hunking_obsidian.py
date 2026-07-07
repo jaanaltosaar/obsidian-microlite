@@ -327,13 +327,12 @@ def render(
         in_win = [v for v in versions if v[0] >= cutoff_ms]
         pre = next((v for v in reversed(versions) if v[0] < cutoff_ms), None)
         head_ts, head_data = in_win[-1]
-        meta = (
-            f"\n## {path}\n\n_{len(in_win)} edit(s) in window · newest {iso(head_ts)} · "
-            f"{len(head_data)} chars_\n"
-        )
+        edit_n = len(in_win)
+        # One-line title; per-diff timestamps live in the diff's --- / +++ header rows.
+        title = f"\n## {path} — {edit_n} edit{'' if edit_n == 1 else 's'} in window\n"
 
         if len(head_data) < full_below:
-            parts.append(meta)
+            parts.append(title)
             parts.append(
                 "_current content:_\n\n```markdown\n" + head_data.rstrip() + "\n```\n"
             )
@@ -366,12 +365,10 @@ def render(
             # whitespace rewrite (full delete + identical readd) is not a real edit.
             if diff and _norm_cmp(text_a) != _norm_cmp(text_b):
                 changed = True
-            body.append(
-                f"### {la} → {lb}\n\n```diff\n{diff or '(no textual change)'}\n```\n"
-            )
+            body.append(f"```diff\n{diff or '(no textual change)'}\n```\n")
         if not changed:
             continue  # opened / auto-saved / synced but not actually edited → omit
-        parts.append(meta)
+        parts.append(title)
         parts.extend(body)
 
     return "\n".join(parts)
