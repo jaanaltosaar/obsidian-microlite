@@ -5,7 +5,7 @@ import {
 	MicroliteHunksSettingTab,
 } from './settings';
 import { readSnapshots } from './recovery';
-import { groupByPath, renderReview } from './review';
+import { groupByPath, mergeCurrentContent, renderReview } from './review';
 
 export default class MicroliteHunksPlugin extends Plugin {
 	settings!: MicroliteHunksSettings;
@@ -54,6 +54,17 @@ export default class MicroliteHunksPlugin extends Plugin {
 			}
 
 			const byPath = groupByPath(records);
+			// Fold in the live on-disk content so lagging/empty snapshots don't hide a note's
+			// real current state (e.g. a note created today whose only snapshot is empty).
+			const currents = new Map<string, { mtime: number; data: string }>();
+			for (const path of byPath.keys()) {
+				const f = this.app.vault.getAbstractFileByPath(path);
+				if (f instanceof TFile) {
+					currents.set(path, { mtime: f.stat.mtime, data: await this.app.vault.cachedRead(f) });
+				}
+			}
+			mergeCurrentContent(byPath, currents);
+
 			const md = renderReview(byPath, {
 				now: Date.now(),
 				sinceDays: days,

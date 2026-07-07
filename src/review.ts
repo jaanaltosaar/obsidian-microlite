@@ -278,6 +278,31 @@ export function renderReview(byPath: SnapshotsByPath, opts: RenderOptions): stri
 	return parts.join('\n');
 }
 
+/**
+ * Fold each note's *current on-disk* content in as the newest version.
+ *
+ * File Recovery snapshots lag the live file — a freshly created note often has only an empty
+ * snapshot captured at creation, so the newest snapshot can be 0 chars while the file is full.
+ * The current content is what the user actually wants to review, so we append it (matching what
+ * kometenstaub/obsidian-version-history-diff does). Only augments notes that already have snapshot
+ * history; skips when the content equals the newest snapshot (no real change since it was taken).
+ */
+export function mergeCurrentContent(
+	byPath: SnapshotsByPath,
+	currents: Map<string, { mtime: number; data: string }>,
+): SnapshotsByPath {
+	for (const [path, cur] of currents) {
+		const versions = byPath.get(path);
+		if (!versions || versions.length === 0) continue;
+		const newest = versions[versions.length - 1]!;
+		if (newest.data !== cur.data) {
+			// Guard against clock/iCloud mtime skew so the live content always sorts last.
+			versions.push({ ts: Math.max(cur.mtime, newest.ts + 1), data: cur.data });
+		}
+	}
+	return byPath;
+}
+
 /** Group a flat list of File Recovery records into path → snapshots (asc by ts). */
 export function groupByPath(records: Array<{ path: string; ts: number; data: string }>): SnapshotsByPath {
 	const byPath: SnapshotsByPath = new Map();

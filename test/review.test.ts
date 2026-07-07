@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { groupByPath, renderReview } from '../src/review';
+import { groupByPath, mergeCurrentContent, renderReview } from '../src/review';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixtures = join(here, 'fixtures');
@@ -66,7 +66,42 @@ describe('renderReview', () => {
 		expect(output).toContain('+Started the year strong, reading more and writing more than I expected.');
 	});
 
-	it('shows short notes as full content instead of a diff', () => {
+	it('shows short notes as full content when fullBelow is set', () => {
 		expect(output).toContain('_current content:_\n\n```markdown\n# Quotes');
+	});
+});
+
+describe('mergeCurrentContent', () => {
+	const NO_META = {
+		now: 1768100000000,
+		sinceDays: 0,
+		context: 3,
+		net: true,
+		fullBelow: 0,
+		syncThreshold: 4,
+		withMeta: false,
+	};
+
+	it('surfaces a note whose only snapshot is empty as an all-additions diff (fixes 0-char notes)', () => {
+		const byPath = groupByPath([{ path: 'new.md', ts: 1768000000000, data: '' }]);
+		mergeCurrentContent(byPath, new Map([['new.md', { mtime: 1768000600000, data: '# New\n\nHello world.\n' }]]));
+		expect(byPath.get('new.md')!.length).toBe(2);
+		const md = renderReview(byPath, NO_META);
+		expect(md).toContain('```diff');
+		expect(md).toContain('+# New');
+		expect(md).toContain('+Hello world.');
+		expect(md).not.toContain('_current content:_');
+	});
+
+	it('does not add a duplicate version when current content equals the newest snapshot', () => {
+		const byPath = groupByPath([{ path: 'same.md', ts: 1, data: 'x' }]);
+		mergeCurrentContent(byPath, new Map([['same.md', { mtime: 2, data: 'x' }]]));
+		expect(byPath.get('same.md')!.length).toBe(1);
+	});
+
+	it('ignores current content for notes without snapshot history', () => {
+		const byPath = groupByPath([{ path: 'a.md', ts: 1, data: 'a' }]);
+		mergeCurrentContent(byPath, new Map([['b.md', { mtime: 2, data: 'b' }]]));
+		expect(byPath.has('b.md')).toBe(false);
 	});
 });

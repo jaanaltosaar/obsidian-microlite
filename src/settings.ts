@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS: MicroliteHunksSettings = {
 	defaultDays: 7,
 	outputFolder: 'microlite',
 	context: 3,
-	fullBelow: 4000,
+	fullBelow: 0,
 	syncThreshold: 4,
 };
 
@@ -95,7 +95,7 @@ export class MicroliteHunksSettingTab extends PluginSettingTab {
 		intSetting(
 			containerEl,
 			'Show full content below (chars)',
-			'Notes whose newest version is shorter than this are shown in full instead of diffed.',
+			'Notes shorter than this show their full current content instead of a diff. 0 = always show diffs (recommended).',
 			() => s.fullBelow,
 			async (n) => {
 				s.fullBelow = n;
