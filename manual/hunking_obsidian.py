@@ -325,16 +325,22 @@ def render(
             )
             continue
 
-        chain = ([pre] + in_win) if pre else in_win
-        if len(chain) < 2:
-            parts.append("_single snapshot in window; no diff._\n")
-            continue
-
-        spans = [(chain[0], chain[-1])] if net else list(zip(chain, chain[1:]))
-        for (ta, text_a), (tb, text_b) in spans:
-            diff = heading_aware_diff(text_a, text_b, context, iso(ta), iso(tb))
+        # Baseline = last pre-window snapshot; if there is none the note is new to the window,
+        # so diff against empty and show its whole content as additions (labelled "(new file)").
+        NEW = "(new file)"
+        if net:
+            base_label = iso(pre[0]) if pre else NEW
+            base_text = pre[1] if pre else ""
+            spans = [((base_label, base_text), (iso(head_ts), head_data))]
+        else:
+            chain = ([(iso(pre[0]), pre[1])] if pre else [(NEW, "")]) + [
+                (iso(ts), data) for ts, data in in_win
+            ]
+            spans = list(zip(chain, chain[1:]))
+        for (la, text_a), (lb, text_b) in spans:
+            diff = heading_aware_diff(text_a, text_b, context, la, lb)
             parts.append(
-                f"### {iso(ta)} → {iso(tb)}\n\n```diff\n{diff or '(no textual change)'}\n```\n"
+                f"### {la} → {lb}\n\n```diff\n{diff or '(no textual change)'}\n```\n"
             )
 
     return "\n".join(parts)

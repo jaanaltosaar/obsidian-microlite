@@ -1,6 +1,6 @@
 # Hunking Obsidian
 
-_generated (synthetic) · 8 snapshots across 6 notes_
+_generated (synthetic) · 9 snapshots across 7 notes_
 
 ## Activity by day
 
@@ -9,7 +9,7 @@ _(live edits only; bulk syncs excluded — see below)_
 | Date | Notes | Edits | +chars | −chars | Active hrs | Late-night |
 |------|------:|------:|-------:|-------:|------------|:----------:|
 | 2026-01-14 | 1 | 1 | 0 | 0 | 09:00–09:59 |  |
-| 2026-01-15 | 1 | 2 | 185 | 69 | 10:00–11:59 |  |
+| 2026-01-15 | 2 | 3 | 185 | 69 | 09:00–11:59 |  |
 
 ## Sync events (bulk captures — excluded from metrics)
 
@@ -37,6 +37,24 @@ _2 edit(s) in window · newest 2026-01-15 11:30:00 · 326 chars_
  Planning to pick up the writing pace again next week.
 +Added a short note about the new project idea over coffee.
 +Sketched the rough architecture for it in the afternoon.
+```
+
+
+## lorem-ipsum.md
+
+_1 edit(s) in window · newest 2026-01-15 09:00:00 · 251 chars_
+
+### (new file) → 2026-01-15 09:00:00
+
+```diff
+--- (new file)
++++ 2026-01-15 09:00:00
+@@ -0,0 +1,5 @@ # Lorem ipsum
++# Lorem ipsum
++
++## Dolor sit
++
++Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo.
 ```
 
 

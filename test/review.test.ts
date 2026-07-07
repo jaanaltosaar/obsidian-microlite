@@ -42,7 +42,7 @@ describe('renderReview', () => {
 
 	it('reports the right corpus size in the header', () => {
 		expect(output).toContain('_generated');
-		expect(output).toMatch(/8 snapshots across 6 notes/);
+		expect(output).toMatch(/9 snapshots across 7 notes/);
 	});
 
 	it('excludes the bulk-sync second from the activity table but lists it under sync events', () => {
@@ -53,7 +53,17 @@ describe('renderReview', () => {
 	});
 
 	it('records live-edit metrics for the authored day', () => {
-		expect(output).toMatch(/\| 2026-01-15 \| 1 \| 2 \| 185 \| 69 \| 10:00–11:59 \|/);
+		expect(output).toMatch(/\| 2026-01-15 \| 2 \| 3 \| 185 \| 69 \| 09:00–11:59 \|/);
+	});
+
+	it('renders a brand-new note (no pre-window baseline) as an all-additions diff', () => {
+		const idx = output.indexOf('## lorem-ipsum.md');
+		expect(idx).toBeGreaterThan(-1);
+		const section = output.slice(idx, output.indexOf('## quotes.md'));
+		expect(section).toContain('### (new file) → 2026-01-15 09:00:00');
+		expect(section).toContain('@@ -0,0 +1,5 @@ # Lorem ipsum');
+		expect(section).toContain('+# Lorem ipsum');
+		expect(section).not.toContain('single snapshot in window; no diff');
 	});
 
 	it('diffs the large note with a heading-annotated hunk, newest-first', () => {

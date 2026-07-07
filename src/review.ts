@@ -268,18 +268,25 @@ export function renderReview(byPath: SnapshotsByPath, opts: RenderOptions): stri
 			continue;
 		}
 
-		const chain: Snapshot[] = pre ? [pre, ...inWin] : inWin;
-		if (chain.length < 2) {
-			parts.push('_single snapshot in window; no diff._\n');
-			continue;
+		// Baseline = last pre-window snapshot; if there is none the note is new to the window,
+		// so diff against empty and show its whole content as additions (labelled "(new file)").
+		const NEW = '(new file)';
+		type Side = { label: string; data: string };
+		let spans: Array<[Side, Side]>;
+		if (net) {
+			const base: Side = pre ? { label: iso(pre.ts), data: pre.data } : { label: NEW, data: '' };
+			spans = [[base, { label: iso(head.ts), data: head.data }]];
+		} else {
+			const chain: Side[] = pre
+				? [{ label: iso(pre.ts), data: pre.data }]
+				: [{ label: NEW, data: '' }];
+			for (const s of inWin) chain.push({ label: iso(s.ts), data: s.data });
+			spans = chain.slice(0, -1).map((s, i) => [s, chain[i + 1]!]);
 		}
-		const spans: Array<[Snapshot, Snapshot]> = net
-			? [[chain[0]!, chain[chain.length - 1]!]]
-			: chain.slice(0, -1).map((s, i) => [s, chain[i + 1]!]);
-		for (const [ta, tb] of spans) {
-			const diff = headingAwareDiff(ta.data, tb.data, context, iso(ta.ts), iso(tb.ts));
+		for (const [from, to] of spans) {
+			const diff = headingAwareDiff(from.data, to.data, context, from.label, to.label);
 			parts.push(
-				`### ${iso(ta.ts)} → ${iso(tb.ts)}\n\n\`\`\`diff\n${diff || '(no textual change)'}\n\`\`\`\n`,
+				`### ${from.label} → ${to.label}\n\n\`\`\`diff\n${diff || '(no textual change)'}\n\`\`\`\n`,
 			);
 		}
 	}
