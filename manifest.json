@@ -3,7 +3,7 @@
 	"name": "Microlite",
 	"version": "0.1.1",
 	"minAppVersion": "1.6.0",
-	"description": "Turn your File Recovery history into an LLM-ready weekly review of what you've been writing.",
+	"description": "Turn a week of edits across all your notes into one LLM-ready review — like \"track changes\" for your whole vault, ready to paste into Claude or ChatGPT.",
 	"author": "Jaan Altosaar",
 	"authorUrl": "https://github.com/jaanaltosaar",
 	"isDesktopOnly": false
