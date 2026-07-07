@@ -38,7 +38,7 @@ npm run build   # type-check + production bundle
 ```
 
 To try it, symlink `manifest.json`, `main.js`, and `styles.css` into a **separate dev vault**'s
-`.obsidian/plugins/microlite-hunks/` (never develop against your main vault).
+`.obsidian/plugins/microlite/` (never develop against your main vault).
 
 ### Privacy
 

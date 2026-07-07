@@ -19,7 +19,7 @@ export default class MicroliteHunksPlugin extends Plugin {
 
 		for (const days of [1, 7, 30]) {
 			this.addCommand({
-				id: `microlite-hunks-${days}d`,
+				id: `microlite-${days}d`,
 				name: `Generate hunks (last ${days} day${days === 1 ? '' : 's'})`,
 				callback: () => void this.generate(days),
 			});
