@@ -1,7 +1,7 @@
 {
 	"id": "microlite",
 	"name": "Microlite",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"minAppVersion": "1.6.0",
 	"description": "Turn your File Recovery history into an LLM-ready weekly review of what you've been writing.",
 	"author": "Jaan Altosaar",

@@ -34,6 +34,14 @@ and heading-aware diffs of what changed, newest first. It shows renamed notes un
 name, folds in each note's live content so fresh edits aren't hidden, and drops notes you only
 opened but did not change.
 
+## What it accesses
+
+Microlite runs entirely on your device and makes **no network requests**. It reads File Recovery
+snapshots and your notes' current content, and it writes one review note. It lists your Markdown
+files for a single purpose — detecting renames — and matches a renamed note's snapshots to its
+current file by content, reading a file only when its size matches a snapshot. Nothing leaves your
+vault.
+
 ## Use it
 
 1. Enable the **File recovery** core plugin (Settings → File recovery).
