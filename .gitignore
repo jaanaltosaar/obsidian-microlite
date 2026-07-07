@@ -1,0 +1,32 @@
+# vscode
+.vscode
+
+# Intellij
+*.iml
+.idea
+
+# npm
+node_modules
+
+# Don't include the compiled main.js file in the repo.
+# They should be uploaded to GitHub releases instead.
+main.js
+
+# Exclude sourcemaps
+*.map
+
+# obsidian
+data.json
+
+# Exclude macOS Finder (System Explorer) View States
+.DS_Store
+
+# Python (manual/ script) artifacts
+__pycache__/
+*.pyc
+
+# --- PRIVACY: never commit vault-derived data ---
+# Real-vault fixtures and any generated review notes stay local-only.
+test/fixtures/local/
+microlite-hunks-*.md
+*.local.*

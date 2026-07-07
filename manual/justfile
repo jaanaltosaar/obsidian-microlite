@@ -1,0 +1,14 @@
+# Microlite — manual (no-plugin) workflow. Run `just` to list.
+# You do NOT need the Obsidian plugin to get the benefit: run the python script
+# directly, or pipe it into hunk (https://github.com/modem-dev/hunk) to review.
+
+default:
+    @just --list
+
+# Weekly review → markdown you can paste into an LLM
+review out="week.md" since="7":
+    ./hunking_obsidian.py --since {{since}} --net --out "{{out}}"
+
+# View the window's hunks in hunk (github.com/modem-dev/hunk); pass days, e.g. `just view 1`
+view since="7":
+    ./hunking_obsidian.py --since {{since}} --format patch --out - | hunk patch -

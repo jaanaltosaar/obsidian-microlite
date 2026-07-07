@@ -1,0 +1,10 @@
+{
+	"id": "microlite-hunks",
+	"name": "Microlite Hunks",
+	"version": "0.1.0",
+	"minAppVersion": "1.6.0",
+	"description": "Turn your File Recovery history into an LLM-ready weekly review of what you've been writing.",
+	"author": "Jaan Altosaar",
+	"authorUrl": "https://github.com/jaanaltosaar",
+	"isDesktopOnly": false
+}

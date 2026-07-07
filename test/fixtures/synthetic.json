@@ -1,0 +1,29 @@
+{
+	"_comment": "ENTIRELY SYNTHETIC test data — fabricated note names/content, no real vault data. Never replace with real snapshots. now=2026-01-15T12:00:00Z, window=7d (cutoff 2026-01-08T12:00:00Z).",
+	"records": [
+		{
+			"path": "journal.md",
+			"ts": 1767776400000,
+			"data": "# Journal\n\n## Week 1\n\nStarted the year slow, reading more and writing less than I meant to.\nThe mornings have been quiet and unusually cold this January.\nPlanning to pick up the writing pace again next week.\n"
+		},
+		{
+			"path": "journal.md",
+			"ts": 1768471200000,
+			"data": "# Journal\n\n## Week 1\n\nStarted the year strong, reading more and writing more than I expected.\nThe mornings have been quiet and unusually cold this January.\nPlanning to pick up the writing pace again next week.\nAdded a short note about the new project idea over coffee.\n"
+		},
+		{
+			"path": "journal.md",
+			"ts": 1768476600000,
+			"data": "# Journal\n\n## Week 1\n\nStarted the year strong, reading more and writing more than I expected.\nThe mornings have been quiet and unusually cold this January.\nPlanning to pick up the writing pace again next week.\nAdded a short note about the new project idea over coffee.\nSketched the rough architecture for it in the afternoon.\n"
+		},
+		{
+			"path": "quotes.md",
+			"ts": 1768381200000,
+			"data": "# Quotes\n\n\"The only way out is through.\" — someone worth remembering\n"
+		},
+		{ "path": "sync-a.md", "ts": 1768273200000, "data": "# Synced note A\n\nThis note changed on another device and synced in.\n" },
+		{ "path": "sync-b.md", "ts": 1768273200000, "data": "# Synced note B\n\nThis note changed on another device and synced in.\n" },
+		{ "path": "sync-c.md", "ts": 1768273200000, "data": "# Synced note C\n\nThis note changed on another device and synced in.\n" },
+		{ "path": "sync-d.md", "ts": 1768273200000, "data": "# Synced note D\n\nThis note changed on another device and synced in.\n" }
+	]
+}
