@@ -33,6 +33,7 @@ import re
 import shutil
 import sys
 import tempfile
+import unicodedata
 import datetime as dt
 from pathlib import Path
 from collections import defaultdict
@@ -285,6 +286,16 @@ def sync_summary(snaps: dict, cutoff_ms: float, sync_secs: set[int]) -> str:
     )
 
 
+def _norm_cmp(s: str) -> str:
+    """Normalize away editor/sync noise (trailing whitespace, trailing blank lines, line endings,
+    Unicode form) so a real edit can be told apart from an opened/auto-saved note. Change detection
+    only — never used for the rendered diff."""
+    lines = [ln.rstrip() for ln in s.splitlines()]
+    while lines and lines[-1] == "":
+        lines.pop()
+    return unicodedata.normalize("NFC", "\n".join(lines))
+
+
 def render(
     snaps: dict,
     cutoff_ms: float,
@@ -351,7 +362,9 @@ def render(
         changed = False
         for (la, text_a), (lb, text_b) in spans:
             diff = heading_aware_diff(text_a, text_b, context, la, lb)
-            if diff:
+            # A change only counts if it survives whitespace/encoding normalization — a pure
+            # whitespace rewrite (full delete + identical readd) is not a real edit.
+            if diff and _norm_cmp(text_a) != _norm_cmp(text_b):
                 changed = True
             body.append(
                 f"### {la} → {lb}\n\n```diff\n{diff or '(no textual change)'}\n```\n"

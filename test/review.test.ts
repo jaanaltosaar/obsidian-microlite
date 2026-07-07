@@ -207,6 +207,16 @@ describe('opened-but-unchanged vs genuinely new', () => {
 		expect(md).not.toContain('(new file)'); // old file → baseline is the earliest snapshot, not empty
 	});
 
+	it('omits a note whose only change is whitespace (opened/auto-saved rewrite)', () => {
+		// Every line differs by trailing whitespace → a diff exists, but it is not a real edit.
+		const byPath = groupByPath([
+			{ path: 'ws.md', ts: 1768000000000, data: '# Note\n\nalpha  \nbeta\t\ngamma \n' },
+			{ path: 'ws.md', ts: 1768000600000, data: '# Note\n\nalpha\nbeta\ngamma\n' },
+		]);
+		const md = renderReview(byPath, base);
+		expect(md).not.toContain('## ws.md');
+	});
+
 	it('shows a genuinely new note (flagged in newPaths) as all-additions', () => {
 		const byPath = groupByPath([{ path: 'fresh.md', ts: 1768000000000, data: '# Fresh\n\nbrand new\n' }]);
 		const md = renderReview(byPath, { ...base, newPaths: new Set(['fresh.md']) });

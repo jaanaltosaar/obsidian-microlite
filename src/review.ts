@@ -70,6 +70,22 @@ function splitlines(s: string): string[] {
 
 const rstrip = (s: string): string => s.replace(/\s+$/, '');
 
+/**
+ * Collapse the differences editors/sync introduce without real authoring — trailing whitespace
+ * per line, trailing blank lines, line-ending style, and Unicode form — so a genuine edit can be
+ * told apart from an opened/auto-saved/synced note. Used only for change detection, never for the
+ * rendered diff. (Opening a note can rewrite trailing whitespace on every line, which otherwise
+ * shows as a full delete-then-readd of identical-looking text.)
+ */
+function normalizeForCompare(s: string): string {
+	return s
+		.normalize('NFC')
+		.split(/\r\n|\r|\n/)
+		.map((l) => l.replace(/[ \t]+$/, ''))
+		.join('\n')
+		.replace(/\n+$/, '');
+}
+
 /** Seconds where ≥ threshold distinct notes were captured — bulk sync, not live authoring. */
 function syncSeconds(byPath: SnapshotsByPath, threshold: number): Set<number> {
 	const bySec = new Map<number, Set<string>>();
@@ -297,7 +313,9 @@ export function renderReview(byPath: SnapshotsByPath, opts: RenderOptions): stri
 		let changed = false;
 		for (const [from, to] of spans) {
 			const diff = headingAwareDiff(from.data, to.data, context, from.label, to.label);
-			if (diff) changed = true;
+			// A change only counts if it survives whitespace/encoding normalization — a pure
+			// whitespace rewrite (full delete + identical readd) is not a real edit.
+			if (diff && normalizeForCompare(from.data) !== normalizeForCompare(to.data)) changed = true;
 			body.push(`### ${from.label} → ${to.label}\n\n\`\`\`diff\n${diff || '(no textual change)'}\n\`\`\`\n`);
 		}
 		if (!changed) continue; // opened / auto-saved / synced but not actually edited → omit
