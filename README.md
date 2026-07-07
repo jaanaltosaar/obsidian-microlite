@@ -73,6 +73,30 @@ No vault-derived data is ever committed. Committed test fixtures are entirely sy
 test (`test/no-private-data.test.ts`) fails CI if anything else slips in. Real-vault output stays
 gitignored.
 
+## Community catalog descriptions
+
+Canonical copy for the [community.obsidian.md](https://obsidian.md/plugins) listing.
+
+**Short description (community website)** — 152 / 200 characters:
+
+> Turn a week of edits across all your notes into one LLM-ready review — like "track changes" for
+> your whole vault, ready to paste into Claude or ChatGPT.
+
+**Long description (community website)** — 783 / 1000 characters:
+
+> Microlite reads Obsidian's File Recovery snapshots and writes one dated note that shows only the
+> lines you changed this week: a per-day activity table, then heading-aware diffs, newest first. It
+> handles the messy parts — bulk syncs, renamed notes, live content folded in, and notes you merely
+> opened dropped.
+>
+> Hand that single note to Claude or ChatGPT instead of your whole vault. The model sees only what
+> moved, so it connects ideas across notes on its own. Edit a project plan on Monday and a journal
+> entry on Thursday, and the model surfaces the thread between them — no manual [[links]] needed.
+> You skip the work of curating context and lower the cognitive load of writing, so insight arrives
+> faster.
+>
+> No other tool does this today, apart from a cumbersome manual Python script.
+
 ## License
 
 MIT
