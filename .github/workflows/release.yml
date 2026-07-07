@@ -49,5 +49,5 @@ jobs:
                   gh release create "$tag" \
                     --title="$tag" \
                     --generate-notes \
-                    --draft \
+                    --latest \
                     main.js manifest.json ${{ steps.styles.outputs.exists == 'true' && 'styles.css' || '' }}
