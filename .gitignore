@@ -25,6 +25,9 @@ data.json
 __pycache__/
 *.pyc
 
+# Local dev: path to your test vault (never commit a machine path)
+.vault-path
+
 # --- PRIVACY: never commit vault-derived data ---
 # Real-vault fixtures and any generated review notes stay local-only.
 test/fixtures/local/

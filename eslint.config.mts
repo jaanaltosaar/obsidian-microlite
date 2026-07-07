@@ -15,6 +15,7 @@ export default defineConfig(
 		'tsconfig.json',
 		'vitest.config.ts',
 		'test',
+		'scripts',
 	]),
 	{
 		languageOptions: {
