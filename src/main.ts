@@ -5,7 +5,15 @@ import {
 	MicroliteHunksSettingTab,
 } from './settings';
 import { readSnapshots } from './recovery';
-import { groupByPath, isOwnOutput, mergeCurrentContent, renderReview } from './review';
+import {
+	groupByPath,
+	isOwnOutput,
+	mergeCurrentContent,
+	normalizeForCompare,
+	renderReview,
+	resolveRenames,
+	type SnapshotsByPath,
+} from './review';
 
 export default class MicroliteHunksPlugin extends Plugin {
 	settings!: MicroliteHunksSettings;
@@ -60,20 +68,26 @@ export default class MicroliteHunksPlugin extends Plugin {
 			const cutoffMs = now - days * 86_400_000;
 
 			const byPath = groupByPath(records);
-			// Fold in the live on-disk content so lagging/empty snapshots don't hide a note's
-			// real current state (e.g. a note created today whose only snapshot is empty).
-			const currents = new Map<string, { mtime: number; data: string }>();
+
+			// Paths with snapshots but no live file: deleted, or renamed (snapshots stay under the
+			// old path). Try to re-key the renamed ones onto their current name by content.
 			const deletedPaths = new Set<string>();
+			for (const path of byPath.keys()) {
+				if (!(this.app.vault.getAbstractFileByPath(path) instanceof TFile)) deletedPaths.add(path);
+			}
+			await this.resolveRenamesByContent(byPath, deletedPaths);
+
+			// Fold in the live on-disk content so lagging/empty snapshots don't hide a note's real
+			// current state, and flag genuinely-new files (created within the window).
+			const currents = new Map<string, { mtime: number; data: string }>();
 			const newPaths = new Set<string>();
 			for (const path of byPath.keys()) {
 				const f = this.app.vault.getAbstractFileByPath(path);
 				if (f instanceof TFile) {
 					currents.set(path, { mtime: f.stat.mtime, data: await this.app.vault.cachedRead(f) });
-					// Genuinely new = created within the window. Opening an old note also creates an
-					// in-window snapshot, but its ctime predates the window, so it is not treated as new.
+					// Opening an old note also creates an in-window snapshot, but its ctime predates
+					// the window, so only files actually created in the window count as new.
 					if (f.stat.ctime >= cutoffMs) newPaths.add(path);
-				} else {
-					deletedPaths.add(path); // has snapshots but no live file → deleted or renamed
 				}
 			}
 			mergeCurrentContent(byPath, currents);
@@ -98,6 +112,25 @@ export default class MicroliteHunksPlugin extends Plugin {
 			notice.setMessage('Microlite: generation failed — see console for details.');
 			window.setTimeout(() => notice.hide(), 6000);
 		}
+	}
+
+	/** Detect renames: re-key missing paths' snapshots onto the live file that holds their content.
+	 *  Reads only live files whose byte size matches a missing note's newest snapshot, to bound work
+	 *  (and avoid materializing every iCloud file). */
+	private async resolveRenamesByContent(byPath: SnapshotsByPath, deletedPaths: Set<string>): Promise<void> {
+		if (deletedPaths.size === 0) return;
+		const enc = new TextEncoder();
+		const wantedSizes = new Set<number>();
+		for (const p of deletedPaths) {
+			const vs = byPath.get(p);
+			if (vs && vs.length > 0) wantedSizes.add(enc.encode(vs[vs.length - 1]!.data).length);
+		}
+		const byContent = new Map<string, string>();
+		for (const f of this.app.vault.getMarkdownFiles()) {
+			if (!wantedSizes.has(f.stat.size)) continue;
+			byContent.set(normalizeForCompare(await this.app.vault.cachedRead(f)), f.path);
+		}
+		resolveRenames(byPath, deletedPaths, (content) => byContent.get(normalizeForCompare(content)) ?? null);
 	}
 
 	/** Create (or overwrite same-day) the dated note in the configured folder. */

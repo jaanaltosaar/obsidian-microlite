@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { groupByPath, isOwnOutput, mergeCurrentContent, renderReview } from '../src/review';
+import { groupByPath, isOwnOutput, mergeCurrentContent, renderReview, resolveRenames } from '../src/review';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixtures = join(here, 'fixtures');
@@ -176,6 +176,41 @@ describe('isOwnOutput', () => {
 		expect(isOwnOutput('notes/journal.md', 'microlite')).toBe(false);
 		expect(isOwnOutput('microlite-stuff/note.md', 'microlite')).toBe(false);
 		expect(isOwnOutput('journal.md', '')).toBe(false);
+	});
+});
+
+describe('resolveRenames', () => {
+	it('re-keys a renamed note\'s old-path snapshots onto its current name (by content)', () => {
+		// Snapshots live under a stale `.md.md` path; the live file is `relationship-notes_.md`.
+		const byPath = groupByPath([
+			{ path: 'relationship-notes_.md.md', ts: 1, data: '# R\n\nbody\n' },
+			{ path: 'relationship-notes_.md.md', ts: 2, data: '# R\n\nbody edited\n' },
+		]);
+		const deleted = new Set(['relationship-notes_.md.md']);
+		const live = new Map([['# R\n\nbody edited', 'relationship-notes_.md']]);
+		resolveRenames(byPath, deleted, (content) => live.get(content.trim()) ?? null);
+		expect(deleted.has('relationship-notes_.md.md')).toBe(false);
+		expect(byPath.has('relationship-notes_.md.md')).toBe(false);
+		expect(byPath.get('relationship-notes_.md')!.map((s) => s.ts)).toEqual([1, 2]);
+	});
+
+	it('merges old-path snapshots with the target\'s existing ones, sorted by ts', () => {
+		const byPath = groupByPath([
+			{ path: 'old.md', ts: 1, data: 'a' },
+			{ path: 'new.md', ts: 3, data: 'c' },
+		]);
+		const deleted = new Set(['old.md']);
+		resolveRenames(byPath, deleted, () => 'new.md');
+		expect(byPath.get('new.md')!.map((s) => s.ts)).toEqual([1, 3]);
+		expect(byPath.has('old.md')).toBe(false);
+	});
+
+	it('leaves genuinely-deleted notes when no live file matches', () => {
+		const byPath = groupByPath([{ path: 'gone.md', ts: 1, data: 'x' }]);
+		const deleted = new Set(['gone.md']);
+		resolveRenames(byPath, deleted, () => null);
+		expect(deleted.has('gone.md')).toBe(true);
+		expect(byPath.has('gone.md')).toBe(true);
 	});
 });
 

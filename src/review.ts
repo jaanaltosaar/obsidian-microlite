@@ -77,7 +77,7 @@ const rstrip = (s: string): string => s.replace(/\s+$/, '');
  * rendered diff. (Opening a note can rewrite trailing whitespace on every line, which otherwise
  * shows as a full delete-then-readd of identical-looking text.)
  */
-function normalizeForCompare(s: string): string {
+export function normalizeForCompare(s: string): string {
 	return s
 		.normalize('NFC')
 		.split(/\r\n|\r|\n/)
@@ -371,6 +371,33 @@ export function isOwnOutput(path: string, outputFolder: string): boolean {
 	if (folder && (path === folder || path.startsWith(`${folder}/`))) return true;
 	const base = path.split('/').pop() ?? path;
 	return /^microlite-hunks-.*\.md$/.test(base);
+}
+
+/**
+ * Link snapshots whose original path no longer exists to the live file that now holds their
+ * content — i.e. detect renames. File Recovery keys snapshots by path and does not migrate them on
+ * rename, so a created-then-renamed note's history sits under the old path (often with quirks like
+ * a doubled `.md.md` extension) while the current file has no snapshots under its new name.
+ *
+ * For each missing path, `findCurrentPath(newestContent)` returns the live path whose content
+ * matches, or null. Matched snapshots are re-keyed onto that path (merged with any it already has,
+ * sorted by ts) and removed from `deletedPaths`; unmatched paths stay deleted.
+ */
+export function resolveRenames(
+	byPath: SnapshotsByPath,
+	deletedPaths: Set<string>,
+	findCurrentPath: (content: string) => string | null,
+): void {
+	for (const oldPath of [...deletedPaths]) {
+		const versions = byPath.get(oldPath);
+		if (!versions || versions.length === 0) continue;
+		const target = findCurrentPath(versions[versions.length - 1]!.data);
+		if (!target || target === oldPath) continue;
+		const existing = byPath.get(target) ?? [];
+		byPath.set(target, [...existing, ...versions].sort((a, b) => a.ts - b.ts));
+		byPath.delete(oldPath);
+		deletedPaths.delete(oldPath);
+	}
 }
 
 /** Group a flat list of File Recovery records into path → snapshots (asc by ts). */
