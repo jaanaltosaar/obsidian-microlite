@@ -57,10 +57,13 @@ export default class MicroliteHunksPlugin extends Plugin {
 			// Fold in the live on-disk content so lagging/empty snapshots don't hide a note's
 			// real current state (e.g. a note created today whose only snapshot is empty).
 			const currents = new Map<string, { mtime: number; data: string }>();
+			const deletedPaths = new Set<string>();
 			for (const path of byPath.keys()) {
 				const f = this.app.vault.getAbstractFileByPath(path);
 				if (f instanceof TFile) {
 					currents.set(path, { mtime: f.stat.mtime, data: await this.app.vault.cachedRead(f) });
+				} else {
+					deletedPaths.add(path); // has snapshots but no live file → deleted or renamed
 				}
 			}
 			mergeCurrentContent(byPath, currents);
@@ -73,6 +76,7 @@ export default class MicroliteHunksPlugin extends Plugin {
 				fullBelow: this.settings.fullBelow,
 				syncThreshold: this.settings.syncThreshold,
 				withMeta: true,
+				deletedPaths,
 			});
 
 			const file = await this.writeNote(md);

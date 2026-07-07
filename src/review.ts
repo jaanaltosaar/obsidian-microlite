@@ -32,6 +32,8 @@ export interface RenderOptions {
 	syncThreshold?: number;
 	/** Include the per-day activity table + sync summary. */
 	withMeta?: boolean;
+	/** Paths that have snapshots but no longer exist in the vault — listed separately, not diffed. */
+	deletedPaths?: Set<string>;
 }
 
 /** path → snapshots sorted ascending by ts. */
@@ -240,7 +242,14 @@ export function renderReview(byPath: SnapshotsByPath, opts: RenderOptions): stri
 		.filter(([, v]) => v[v.length - 1]!.ts >= cutoffMs)
 		.sort((a, b) => b[1][b[1].length - 1]!.ts - a[1][a[1].length - 1]!.ts);
 
+	const deleted = opts.deletedPaths ?? new Set<string>();
+	const deletedInWindow: string[] = [];
+
 	for (const [path, versions] of ranked) {
+		if (deleted.has(path)) {
+			deletedInWindow.push(path); // collect for the bottom section; don't diff a gone note
+			continue;
+		}
 		const inWin = versions.filter((s) => s.ts >= cutoffMs);
 		let pre: Snapshot | null = null;
 		for (let i = versions.length - 1; i >= 0; i--) {
@@ -273,6 +282,14 @@ export function renderReview(byPath: SnapshotsByPath, opts: RenderOptions): stri
 				`### ${iso(ta.ts)} → ${iso(tb.ts)}\n\n\`\`\`diff\n${diff || '(no textual change)'}\n\`\`\`\n`,
 			);
 		}
+	}
+
+	if (deletedInWindow.length > 0) {
+		parts.push(
+			'\n## Deleted notes\n\n_Edited in the window but no longer in the vault (deleted or renamed)._\n\n' +
+				deletedInWindow.map((p) => `- ${p}`).join('\n') +
+				'\n',
+		);
 	}
 
 	return parts.join('\n');

@@ -105,3 +105,45 @@ describe('mergeCurrentContent', () => {
 		expect(byPath.has('b.md')).toBe(false);
 	});
 });
+
+describe('deleted notes', () => {
+	it('lists gone notes in a bottom section instead of diffing them', () => {
+		const byPath = groupByPath([
+			{ path: 'kept.md', ts: 1768000000000, data: '# Kept\n\none\ntwo\n' },
+			{ path: 'kept.md', ts: 1768000600000, data: '# Kept\n\none\ntwo\nthree\n' },
+			{ path: 'gone.md', ts: 1768000300000, data: 'orphaned snapshot' },
+		]);
+		const md = renderReview(byPath, {
+			now: 1768100000000,
+			sinceDays: 0,
+			context: 3,
+			net: true,
+			fullBelow: 0,
+			syncThreshold: 4,
+			withMeta: false,
+			deletedPaths: new Set(['gone.md']),
+		});
+		expect(md).toContain('## Deleted notes');
+		expect(md).toContain('- gone.md');
+		// the deleted note is not rendered as its own diff section
+		expect(md).not.toContain('## gone.md');
+		expect(md).not.toContain('orphaned snapshot');
+		// kept note still diffs normally
+		expect(md).toContain('## kept.md');
+		expect(md).toContain('+three');
+	});
+
+	it('omits the section when nothing is deleted', () => {
+		const byPath = groupByPath([{ path: 'a.md', ts: 1768000000000, data: 'x' }]);
+		const md = renderReview(byPath, {
+			now: 1768100000000,
+			sinceDays: 0,
+			context: 3,
+			net: true,
+			fullBelow: 0,
+			syncThreshold: 4,
+			withMeta: false,
+		});
+		expect(md).not.toContain('## Deleted notes');
+	});
+});
