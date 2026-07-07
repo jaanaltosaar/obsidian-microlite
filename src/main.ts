@@ -5,7 +5,7 @@ import {
 	MicroliteHunksSettingTab,
 } from './settings';
 import { readSnapshots } from './recovery';
-import { groupByPath, mergeCurrentContent, renderReview } from './review';
+import { groupByPath, isOwnOutput, mergeCurrentContent, renderReview } from './review';
 
 export default class MicroliteHunksPlugin extends Plugin {
 	settings!: MicroliteHunksSettings;
@@ -46,7 +46,10 @@ export default class MicroliteHunksPlugin extends Plugin {
 	async generate(days: number): Promise<void> {
 		const notice = new Notice(`Microlite: generating hunks (last ${days}d)…`, 0);
 		try {
-			const records = await readSnapshots(this.app);
+			// Always exclude our own generated review notes so hunks never feed back on themselves.
+			const records = (await readSnapshots(this.app)).filter(
+				(r) => !isOwnOutput(r.path, this.settings.outputFolder),
+			);
 			if (records.length === 0) {
 				notice.setMessage('Microlite: no File Recovery snapshots found. Enable the File recovery core plugin.');
 				window.setTimeout(() => notice.hide(), 6000);

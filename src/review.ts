@@ -320,6 +320,19 @@ export function mergeCurrentContent(
 	return byPath;
 }
 
+/**
+ * True if a note path is one of Microlite's own generated outputs, so we never fold our own
+ * review notes back into future hunks. Matches anything inside the configured output folder, plus
+ * the generated `microlite-hunks-*.md` filename anywhere (covers a root output folder or a
+ * renamed folder).
+ */
+export function isOwnOutput(path: string, outputFolder: string): boolean {
+	const folder = outputFolder.replace(/^\/+|\/+$/g, '');
+	if (folder && (path === folder || path.startsWith(`${folder}/`))) return true;
+	const base = path.split('/').pop() ?? path;
+	return /^microlite-hunks-.*\.md$/.test(base);
+}
+
 /** Group a flat list of File Recovery records into path → snapshots (asc by ts). */
 export function groupByPath(records: Array<{ path: string; ts: number; data: string }>): SnapshotsByPath {
 	const byPath: SnapshotsByPath = new Map();

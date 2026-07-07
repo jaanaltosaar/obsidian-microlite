@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { groupByPath, mergeCurrentContent, renderReview } from '../src/review';
+import { groupByPath, isOwnOutput, mergeCurrentContent, renderReview } from '../src/review';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixtures = join(here, 'fixtures');
@@ -145,5 +145,23 @@ describe('deleted notes', () => {
 			withMeta: false,
 		});
 		expect(md).not.toContain('## Deleted notes');
+	});
+});
+
+describe('isOwnOutput', () => {
+	it('excludes notes inside the configured output folder', () => {
+		expect(isOwnOutput('microlite/microlite-hunks-2026-07-06.md', 'microlite')).toBe(true);
+		expect(isOwnOutput('microlite/anything.md', 'microlite')).toBe(true);
+		expect(isOwnOutput('microlite', 'microlite')).toBe(true);
+	});
+
+	it('excludes generated notes at the vault root (empty output folder)', () => {
+		expect(isOwnOutput('microlite-hunks-2026-07-06.md', '')).toBe(true);
+	});
+
+	it('does not exclude ordinary notes or prefix look-alikes', () => {
+		expect(isOwnOutput('notes/journal.md', 'microlite')).toBe(false);
+		expect(isOwnOutput('microlite-stuff/note.md', 'microlite')).toBe(false);
+		expect(isOwnOutput('journal.md', '')).toBe(false);
 	});
 });
