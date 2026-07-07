@@ -16,7 +16,7 @@ export interface MicroliteHunksSettings {
 
 export const DEFAULT_SETTINGS: MicroliteHunksSettings = {
 	defaultDays: 7,
-	outputFolder: '',
+	outputFolder: 'microlite',
 	context: 3,
 	fullBelow: 4000,
 	syncThreshold: 4,
