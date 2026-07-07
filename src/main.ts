@@ -1,9 +1,10 @@
-import { Notice, Plugin, TFile, normalizePath } from 'obsidian';
+import { Notice, Plugin, TFile, addIcon, normalizePath } from 'obsidian';
 import {
 	DEFAULT_SETTINGS,
 	MicroliteHunksSettings,
 	MicroliteHunksSettingTab,
 } from './settings';
+import { MICROLITE_ICON_ID, MICROLITE_ICON_SVG } from './icon';
 import { readSnapshots } from './recovery';
 import {
 	groupByPath,
@@ -21,7 +22,9 @@ export default class MicroliteHunksPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		this.addRibbonIcon('history', 'Microlite: generate hunks', () => {
+		addIcon(MICROLITE_ICON_ID, MICROLITE_ICON_SVG);
+
+		this.addRibbonIcon(MICROLITE_ICON_ID, 'Microlite: generate hunks', () => {
 			void this.generate(this.settings.defaultDays);
 		});
 
@@ -29,6 +32,7 @@ export default class MicroliteHunksPlugin extends Plugin {
 			this.addCommand({
 				id: `microlite-${days}d`,
 				name: `Generate hunks (last ${days} day${days === 1 ? '' : 's'})`,
+				icon: MICROLITE_ICON_ID,
 				callback: () => void this.generate(days),
 			});
 		}
