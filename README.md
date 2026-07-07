@@ -1,22 +1,48 @@
-# Microlite Hunks
+# Microlite
 
-Turn Obsidian's **File Recovery** history into an LLM-ready weekly review of what you've actually
-been writing — one tap, one note, ready to paste into a chat for interrogation.
+Turn Obsidian's **File Recovery** history into an LLM-ready review of what you've actually been
+writing — one tap, one note, ready to paste into a chat for interrogation.
 
-Obsidian's File Recovery core plugin quietly snapshots your notes as you edit. Microlite Hunks
-reads those snapshots, groups them by note, and renders a single markdown note —
-`microlite-hunks-YYYY-MM-DD.md` — with a per-day activity table (edit volume, active hours,
-context-switching), bulk-sync detection, and heading-aware diffs of what changed, newest first.
+## The idea
+
+Obsidian can contain fluidal structure, with crystals called _microlites_ suspended in the flow of
+molten lava.
+
+Similarly, you can view your notes in the Obsidian note-taking app through the microscopic
+modifications you make to them day to day, or week to week. These changes crystallize what is on
+your mind, what you have been working on, and where you are headed next.
+
+Most importantly, they focus a large language model's attention on what is most salient, rather than
+overloading its finite context with entire files — most of which is irrelevant to what you care
+about.
+
+Each set of changes forms a _hunk_ (from "chunk"): the lines that changed in a file, plus some
+surrounding "context" lines. With large language models such as ChatGPT or Claude, this is known as
+_context engineering_.
+
+It helps most when you have modified several files at once — some very small (only a few lines),
+others very large (tens of thousands of lines, such as a journal kept over a year, or book
+excerpts). Snapshots capture how your notes evolve over time, and they give a large language model a
+read on your state of mind from the notes you have captured or modified.
+
+## What it does
+
+Obsidian's File Recovery core plugin quietly snapshots your notes as you edit. Microlite reads those
+snapshots, groups them by note, and renders a single markdown note — `microlite-hunks-YYYY-MM-DD.md`
+— with a per-day activity table (edit volume, active hours, context-switching), bulk-sync detection,
+and heading-aware diffs of what changed, newest first. It shows renamed notes under their current
+name, folds in each note's live content so fresh edits aren't hidden, and drops notes you only
+opened but did not change.
 
 ## Use it
 
 1. Enable the **File recovery** core plugin (Settings → File recovery).
-2. Enable Microlite Hunks.
-3. Tap the ribbon icon (⟲) — or run **Generate hunks (last 1 / 7 / 30 days)** from the command
+2. Enable Microlite.
+3. Tap the Microlite ribbon icon — or run **Generate hunks (last 1 / 7 / 30 days)** from the command
    palette. A dated review note opens; paste it into your LLM.
 
-Settings let you change the default window, output folder, diff context, the full-content
-threshold, and the bulk-sync threshold.
+Settings let you change the default window, output folder, diff context, the full-content threshold,
+and the bulk-sync threshold.
 
 Works on **desktop and mobile** — it reads File Recovery in-process, no external tools required.
 
@@ -32,13 +58,14 @@ which reads File Recovery straight from disk and can also feed
 
 ```sh
 npm install
-npm run dev     # rebuild on change → main.js
-npm test        # parity vs the Python oracle + privacy guard
-npm run build   # type-check + production bundle
+npm run dev            # rebuild on change → main.js
+npm test               # parity vs the Python oracle + privacy guard
+npm run build          # type-check + production bundle
+npm run install:vault  # build, then copy into a test vault (path in gitignored .vault-path)
 ```
 
-To try it, symlink `manifest.json`, `main.js`, and `styles.css` into a **separate dev vault**'s
-`.obsidian/plugins/microlite/` (never develop against your main vault).
+Point `.vault-path` (or the `OBSIDIAN_VAULT` env var) at a **separate dev vault** — never develop
+against your main vault. Reload Obsidian to pick up a new build.
 
 ### Privacy
 
