@@ -56,13 +56,22 @@ export default class MicroliteHunksPlugin extends Plugin {
 
 	/** Read File Recovery, render the review, write & open microlite-hunks-YYYY-MM-DD.md. */
 	async generate(days: number): Promise<void> {
-		const notice = new Notice(`Microlite: generating hunks (last ${days}d)…`, 0);
+		// Generation is often near-instant; keep the notice on screen for a pleasant minimum with a
+		// live elapsed clock (the "deliberate delay" pattern) so it reads as real work, not a flicker.
+		const MIN_VISIBLE_MS = 1200;
+		const started = performance.now();
+		const label = `Microlite: generating hunks (last ${days}d)…`;
+		const notice = new Notice(`${label} 0.0s`, 0);
+		const clock = window.setInterval(() => {
+			notice.setMessage(`${label} ${((performance.now() - started) / 1000).toFixed(1)}s`);
+		}, 100);
 		try {
 			// Always exclude our own generated review notes so hunks never feed back on themselves.
 			const records = (await readSnapshots(this.app)).filter(
 				(r) => !isOwnOutput(r.path, this.settings.outputFolder),
 			);
 			if (records.length === 0) {
+				window.clearInterval(clock);
 				notice.setMessage('Microlite: no File Recovery snapshots found. Enable the File recovery core plugin.');
 				window.setTimeout(() => notice.hide(), 6000);
 				return;
@@ -109,9 +118,14 @@ export default class MicroliteHunksPlugin extends Plugin {
 			});
 
 			const file = await this.writeNote(md);
+			// Let the clock reach a comfortable minimum before dismissing.
+			const remaining = MIN_VISIBLE_MS - (performance.now() - started);
+			if (remaining > 0) await new Promise((r) => window.setTimeout(r, remaining));
+			window.clearInterval(clock);
 			notice.hide();
 			await this.app.workspace.getLeaf(false).openFile(file);
 		} catch (err) {
+			window.clearInterval(clock);
 			console.error('Microlite Hunks: generation failed', err);
 			notice.setMessage('Microlite: generation failed — see console for details.');
 			window.setTimeout(() => notice.hide(), 6000);
