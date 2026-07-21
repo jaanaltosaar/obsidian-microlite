@@ -12,6 +12,14 @@ export interface MicroliteHunksSettings {
 	fullBelow: number;
 	/** Distinct notes sharing one second ≥ this ⇒ treated as a bulk sync, excluded from metrics. */
 	syncThreshold: number;
+	/** Keep the output folder in Obsidian's "Excluded files" so review notes stay out of search. */
+	excludeFromSearch: boolean;
+	/**
+	 * The exact filter string we last wrote into `userIgnoreFilters`. Lets us remove only our own
+	 * entry (never the user's) when the output folder is renamed or the toggle is turned off.
+	 * Internal bookkeeping — not shown in the settings UI.
+	 */
+	appliedIgnoreFilter: string;
 }
 
 export const DEFAULT_SETTINGS: MicroliteHunksSettings = {
@@ -20,6 +28,8 @@ export const DEFAULT_SETTINGS: MicroliteHunksSettings = {
 	context: 3,
 	fullBelow: 0,
 	syncThreshold: 4,
+	excludeFromSearch: true,
+	appliedIgnoreFilter: '',
 };
 
 function intSetting(
@@ -77,7 +87,24 @@ export class MicroliteHunksSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						s.outputFolder = value.trim().replace(/^\/+|\/+$/g, '');
 						await save();
+						// Move the "Excluded files" filter from the old folder onto the new one.
+						this.plugin.syncSearchExclusion();
 					}),
+			);
+
+		new Setting(containerEl)
+			.setName('Exclude output folder from search')
+			.setDesc(
+				'Add the output folder to Obsidian’s "Excluded files" (Settings → Files and links) so ' +
+					'generated review notes stay out of Search, Quick switcher, Graph and backlinks. ' +
+					'Note: files still surface when you search with an explicit path: or file: qualifier.',
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(s.excludeFromSearch).onChange(async (value) => {
+					s.excludeFromSearch = value;
+					await save();
+					this.plugin.syncSearchExclusion();
+				}),
 			);
 
 		intSetting(
