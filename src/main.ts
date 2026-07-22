@@ -16,6 +16,29 @@ import {
 	type SnapshotsByPath,
 } from './review';
 
+const HOUR_MS = 3_600_000;
+const DAY_MS = 86_400_000;
+
+/** A selectable look-back window for a review. */
+interface ReviewWindow {
+	/** Stable command-id suffix (e.g. '6h', '7d') — keep constant so user hotkeys survive. */
+	id: string;
+	/** Human label used in the command name and progress notice (e.g. '6 hours'). */
+	label: string;
+	/** Window length in milliseconds. */
+	ms: number;
+}
+
+/** Command-palette windows, coarsest-recent first. Fine-grained hours for same-day review, then days. */
+const REVIEW_WINDOWS: ReviewWindow[] = [
+	{ id: '1h', label: '1 hour', ms: HOUR_MS },
+	{ id: '6h', label: '6 hours', ms: 6 * HOUR_MS },
+	{ id: '12h', label: '12 hours', ms: 12 * HOUR_MS },
+	{ id: '24h', label: '24 hours', ms: DAY_MS },
+	{ id: '7d', label: '7 days', ms: 7 * DAY_MS },
+	{ id: '30d', label: '30 days', ms: 30 * DAY_MS },
+];
+
 export default class MicroliteHunksPlugin extends Plugin {
 	settings!: MicroliteHunksSettings;
 
@@ -25,15 +48,15 @@ export default class MicroliteHunksPlugin extends Plugin {
 		addIcon(MICROLITE_ICON_ID, MICROLITE_ICON_SVG);
 
 		this.addRibbonIcon(MICROLITE_ICON_ID, 'Microlite: generate hunks', () => {
-			void this.generate(this.settings.defaultDays);
+			void this.generate(this.defaultWindow());
 		});
 
-		for (const days of [1, 7, 30]) {
+		for (const w of REVIEW_WINDOWS) {
 			this.addCommand({
-				id: `microlite-${days}d`,
-				name: `Generate hunks (last ${days} day${days === 1 ? '' : 's'})`,
+				id: `microlite-${w.id}`,
+				name: `Generate hunks (last ${w.label})`,
 				icon: MICROLITE_ICON_ID,
-				callback: () => void this.generate(days),
+				callback: () => void this.generate(w),
 			});
 		}
 
@@ -58,13 +81,20 @@ export default class MicroliteHunksPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	/** The window the ribbon button uses, honoring the configured default (in days). */
+	private defaultWindow(): ReviewWindow {
+		const days = this.settings.defaultDays;
+		const match = REVIEW_WINDOWS.find((w) => w.ms === days * DAY_MS);
+		return match ?? { id: `${days}d`, label: `${days} day${days === 1 ? '' : 's'}`, ms: days * DAY_MS };
+	}
+
 	/** Read File Recovery, render the review, write & open microlite-hunks-YYYY-MM-DD.md. */
-	async generate(days: number): Promise<void> {
+	async generate(reviewWindow: ReviewWindow): Promise<void> {
 		// Generation is often near-instant; keep the notice on screen for a pleasant minimum with a
 		// live elapsed clock (the "deliberate delay" pattern) so it reads as real work, not a flicker.
 		const MIN_VISIBLE_MS = 1200;
 		const started = performance.now();
-		const label = `Microlite: generating hunks (last ${days}d)…`;
+		const label = `Microlite: generating hunks (last ${reviewWindow.label})…`;
 		const notice = new Notice(`${label} 0.0s`, 0);
 		const clock = window.setInterval(() => {
 			notice.setMessage(`${label} ${((performance.now() - started) / 1000).toFixed(1)}s`);
@@ -82,7 +112,7 @@ export default class MicroliteHunksPlugin extends Plugin {
 			}
 
 			const now = Date.now();
-			const cutoffMs = now - days * 86_400_000;
+			const cutoffMs = now - reviewWindow.ms;
 
 			const byPath = groupByPath(records);
 
@@ -111,7 +141,7 @@ export default class MicroliteHunksPlugin extends Plugin {
 
 			const md = renderReview(byPath, {
 				now,
-				sinceDays: days,
+				sinceDays: reviewWindow.ms / DAY_MS,
 				context: this.settings.context,
 				net: true,
 				fullBelow: this.settings.fullBelow,
