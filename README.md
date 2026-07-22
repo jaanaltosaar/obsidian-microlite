@@ -42,15 +42,20 @@ files for a single purpose — detecting renames — and matches a renamed note'
 current file by content, reading a file only when its size matches a snapshot. Nothing leaves your
 vault.
 
+By default it also adds its output folder to Obsidian's **Excluded files** list (Settings → Files
+and links) so the generated review notes stay out of Search, Quick switcher, Graph, and backlinks.
+This edits only that one filter and never touches your own excludes; turn it off with the **Exclude
+output folder from search** setting.
+
 ## Use it
 
 1. Enable the **File recovery** core plugin (Settings → File recovery).
 2. Enable Microlite.
-3. Tap the Microlite ribbon icon — or run **Generate hunks (last 1 / 7 / 30 days)** from the command
-   palette. A dated review note opens; paste it into your LLM.
+3. Tap the Microlite ribbon icon — or run **Generate hunks (last 1 / 6 / 12 / 24 hours · 7 / 30 days)**
+   from the command palette. A dated review note opens; paste it into your LLM.
 
 Settings let you change the default window, output folder, diff context, the full-content threshold,
-and the bulk-sync threshold.
+the bulk-sync threshold, and whether the output folder is excluded from search.
 
 Works on **desktop and mobile** — it reads File Recovery in-process, no external tools required.
 
