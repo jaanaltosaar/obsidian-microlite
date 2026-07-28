@@ -6,7 +6,7 @@ import {
 	groupByPath,
 	isOwnOutput,
 	mergeCurrentContent,
-	renderPreamble,
+	renderPromptTemplate,
 	renderReview,
 	resolveRenames,
 } from '../src/review';
@@ -270,22 +270,22 @@ describe('opened-but-unchanged vs genuinely new', () => {
 	});
 });
 
-describe('renderPreamble', () => {
+describe('renderPromptTemplate', () => {
 	const DAY = 86_400_000;
 	// 2026-01-15T12:00:00Z; assertions use UTC-independent substrings to stay timezone-agnostic.
 	const now = 1768478400000;
 
 	it('returns empty for a blank or whitespace-only template', () => {
-		expect(renderPreamble('', now, 7 * DAY, '7 days')).toBe('');
-		expect(renderPreamble('   \n\t', now, 7 * DAY, '7 days')).toBe('');
+		expect(renderPromptTemplate('', now, 7 * DAY, '7 days')).toBe('');
+		expect(renderPromptTemplate('   \n\t', now, 7 * DAY, '7 days')).toBe('');
 	});
 
 	it('substitutes {{window}} with the window label', () => {
-		expect(renderPreamble('last {{window}} of edits', now, 7 * DAY, '7 days')).toBe('last 7 days of edits');
+		expect(renderPromptTemplate('last {{window}} of edits', now, 7 * DAY, '7 days')).toBe('last 7 days of edits');
 	});
 
 	it('spells out {{date}} and {{window_start}} a window apart', () => {
-		const out = renderPreamble('now {{date}} · since {{window_start}}', now, 7 * DAY, '7 days');
+		const out = renderPromptTemplate('now {{date}} · since {{window_start}}', now, 7 * DAY, '7 days');
 		expect(out).toContain('2026'); // spelled-out year present
 		expect(out).not.toContain('{{'); // no unresolved known tokens
 		// window_start is exactly 7 days earlier, so the two rendered dates must differ.
@@ -294,6 +294,8 @@ describe('renderPreamble', () => {
 	});
 
 	it('tolerates inner whitespace and leaves unknown tokens untouched', () => {
-		expect(renderPreamble('{{ window }} then {{mystery}}', now, DAY, '24 hours')).toBe('24 hours then {{mystery}}');
+		expect(renderPromptTemplate('{{ window }} then {{mystery}}', now, DAY, '24 hours')).toBe(
+			'24 hours then {{mystery}}',
+		);
 	});
 });

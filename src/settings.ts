@@ -14,12 +14,14 @@ export interface MicroliteHunksSettings {
 	syncThreshold: number;
 	/** Keep the output folder in Obsidian's "Excluded files" so review notes stay out of search. */
 	excludeFromSearch: boolean;
+	/** When on, {@link promptTemplate} is prepended to every generated note. */
+	promptTemplateEnabled: boolean;
 	/**
-	 * Optional markdown prepended to every generated note (blank = none). Supports the placeholders
-	 * {{time}}, {{date}}, {{window}} and {{window_start}}. Use it to lead the note with a journaling
-	 * scaffold and an LLM system prompt so it's ready to fill in and paste.
+	 * Markdown prepended to every generated note when {@link promptTemplateEnabled} is on. Supports the
+	 * placeholders {{time}}, {{date}}, {{window}} and {{window_start}}. Use it to lead the note with a
+	 * journaling scaffold and an LLM system prompt so it's ready to fill in and paste.
 	 */
-	reviewPreamble: string;
+	promptTemplate: string;
 	/**
 	 * The exact filter string we last wrote into `userIgnoreFilters`. Lets us remove only our own
 	 * entry (never the user's) when the output folder is renamed or the toggle is turned off.
@@ -29,14 +31,14 @@ export interface MicroliteHunksSettings {
 }
 
 /**
- * Shipped default for {@link MicroliteHunksSettings.reviewPreamble}: a fill-in-the-blank journaling
+ * Shipped default for {@link MicroliteHunksSettings.promptTemplate}: a fill-in-the-blank journaling
  * scaffold plus an ACT-therapist prompt, so a fresh install produces a note that's ready to complete
  * and paste. The leading HTML comment is hidden in reading view but carries the opt-out. Built by
  * array-join so no source-trailing-whitespace lint fights the intentional trailing spaces on the
- * answer lines. Clear the field in settings for the plain review note.
+ * answer lines. Turn off the "Prompt template" toggle in settings for the plain review note.
  */
-const DEFAULT_REVIEW_PREAMBLE = [
-	'<!-- Microlite review preamble. To turn this off, clear the "Review preamble" field in Settings → Community plugins → Microlite. -->',
+const DEFAULT_PROMPT_TEMPLATE = [
+	'<!-- Microlite prompt template. To turn this off, disable the "Prompt template" toggle in Settings → Community plugins → Microlite. -->',
 	'',
 	"I've attached the last {{window}} of Obsidian hunks from Microlite below, with some overlap with your previous context around {{window_start}} (it is now {{time}} on {{date}}).",
 	'',
@@ -60,7 +62,8 @@ export const DEFAULT_SETTINGS: MicroliteHunksSettings = {
 	fullBelow: 0,
 	syncThreshold: 4,
 	excludeFromSearch: true,
-	reviewPreamble: DEFAULT_REVIEW_PREAMBLE,
+	promptTemplateEnabled: true,
+	promptTemplate: DEFAULT_PROMPT_TEMPLATE,
 	appliedIgnoreFilter: '',
 };
 
@@ -140,23 +143,34 @@ export class MicroliteHunksSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Review preamble')
+			.setName('Prompt template')
 			.setDesc(
-				'Optional markdown prepended to every generated note. Leave blank for none. ' +
-					'Placeholders: {{time}}, {{date}}, {{window}} (e.g. "7 days"), {{window_start}} ' +
-					'(the date the window opened). Use it to lead the note with a journaling scaffold ' +
-					'and an LLM prompt, ready to fill in and paste.',
+				'Prepend the template below to every generated note — a journaling scaffold and an LLM ' +
+					'prompt, ready to fill in and paste. Turn off to generate the plain review note.',
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(s.promptTemplateEnabled).onChange(async (value) => {
+					s.promptTemplateEnabled = value;
+					await save();
+				}),
+			);
+
+		new Setting(containerEl)
+			.setName('Template')
+			.setDesc(
+				'Markdown prepended when "Prompt template" is on. Placeholders: {{time}}, {{date}}, ' +
+					'{{window}} (e.g. "7 days"), {{window_start}} (the date the window opened).',
 			)
 			.addTextArea((text) => {
 				text
 					.setPlaceholder('I\'ve attached the last {{window}} of Obsidian hunks…')
-					.setValue(s.reviewPreamble)
+					.setValue(s.promptTemplate)
 					.onChange(async (value) => {
-						s.reviewPreamble = value;
+						s.promptTemplate = value;
 						await save();
 					});
 				text.inputEl.rows = 8;
-				text.inputEl.addClass('microlite-preamble-input');
+				text.inputEl.addClass('microlite-prompt-template-input');
 			});
 
 		intSetting(

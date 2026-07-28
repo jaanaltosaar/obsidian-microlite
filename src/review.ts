@@ -87,15 +87,15 @@ export function normalizeForCompare(s: string): string {
 }
 
 /**
- * Fill the review-preamble template's placeholders. Empty/whitespace templates render to '' so the
- * caller can skip prepending entirely. Unknown `{{…}}` tokens are left untouched.
+ * Fill the prompt template's placeholders. Empty/whitespace templates render to '' so the caller can
+ * skip prepending entirely. Unknown `{{…}}` tokens are left untouched.
  *
  *   {{time}}          → local wall-clock time      (e.g. "3:42 PM")
  *   {{date}}          → today, spelled out          (e.g. "Sunday, July 27, 2026")
  *   {{window}}        → the window's label           (e.g. "7 days")
  *   {{window_start}}  → the date the window opened   (now − window length), spelled out
  */
-export function renderPreamble(template: string, nowMs: number, windowMs: number, windowLabel: string): string {
+export function renderPromptTemplate(template: string, nowMs: number, windowMs: number, windowLabel: string): string {
 	if (!template.trim()) return '';
 	const now = new Date(nowMs);
 	const start = new Date(nowMs - windowMs);

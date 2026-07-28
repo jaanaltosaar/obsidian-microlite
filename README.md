@@ -55,17 +55,18 @@ output folder from search** setting.
    from the command palette. A dated review note opens; paste it into your LLM.
 
 Settings let you change the default window, output folder, diff context, the full-content threshold,
-the bulk-sync threshold, whether the output folder is excluded from search, and an optional **review
-preamble**.
+the bulk-sync threshold, whether the output folder is excluded from search, and an optional **prompt
+template**.
 
 Works on **desktop and mobile** — it reads File Recovery in-process, no external tools required.
 
-### Review preamble — turn hunks into a journaling prompt
+### Prompt template — turn hunks into a journaling prompt
 
-Obsidian's own Templates can't run a plugin command, so Microlite bakes this in instead: every
-generated note leads with the **Review preamble** — a fill-in-the-blank scaffold plus an LLM prompt,
-ready to complete and paste. It ships with a journaling + Acceptance-and-Commitment-Therapy default;
-edit it, or clear it, in settings. Four placeholders are substituted at generation time:
+Obsidian's own Templates can't run a plugin command, so Microlite bakes this in instead: with the
+**Prompt template** toggle on, every generated note leads with your template — a fill-in-the-blank
+scaffold plus an LLM prompt, ready to complete and paste. It ships with a journaling +
+Acceptance-and-Commitment-Therapy default; edit it in settings, or flip the toggle off for the plain
+note. Four placeholders are substituted at generation time:
 
 | Placeholder        | Renders as                                    |
 | ------------------ | --------------------------------------------- |
@@ -83,7 +84,7 @@ For example:
 >
 > As an expert in Acceptance and Commitment Therapy, provide stances to practice for the week …
 
-Clear the field for a plain review note with no preamble.
+Turn the **Prompt template** toggle off for a plain review note with no template.
 
 ## Prefer no plugin? Use the script.
 

@@ -7,8 +7,8 @@ If your plugin does not need CSS, delete this file.
 
 */
 
-/* Give the review-preamble template a roomy, full-width editing area in settings. */
-.microlite-preamble-input {
+/* Give the prompt template a roomy, full-width editing area in settings. */
+.microlite-prompt-template-input {
 	width: 100%;
 	font-family: var(--font-monospace);
 }

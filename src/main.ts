@@ -11,7 +11,7 @@ import {
 	isOwnOutput,
 	mergeCurrentContent,
 	normalizeForCompare,
-	renderPreamble,
+	renderPromptTemplate,
 	renderReview,
 	resolveRenames,
 	type SnapshotsByPath,
@@ -71,11 +71,15 @@ export default class MicroliteHunksPlugin extends Plugin {
 	onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<MicroliteHunksSettings>,
-		);
+		// `reviewPreamble` was renamed to `promptTemplate` in 0.5.0; carry a 0.4.0 user's saved text
+		// (and their intent to keep it) across the rename before merging over the defaults.
+		const data = (await this.loadData()) as (Partial<MicroliteHunksSettings> & { reviewPreamble?: string }) | null;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+		if (data && typeof data.reviewPreamble === 'string' && data.promptTemplate === undefined) {
+			this.settings.promptTemplate = data.reviewPreamble;
+			delete (this.settings as Partial<MicroliteHunksSettings> & { reviewPreamble?: string }).reviewPreamble;
+			await this.saveSettings();
+		}
 	}
 
 	async saveSettings() {
@@ -152,8 +156,10 @@ export default class MicroliteHunksPlugin extends Plugin {
 				newPaths,
 			});
 
-			const preamble = renderPreamble(this.settings.reviewPreamble, now, reviewWindow.ms, reviewWindow.label);
-		const file = await this.writeNote(preamble ? `${preamble}\n\n${md}` : md);
+			const prompt = this.settings.promptTemplateEnabled
+			? renderPromptTemplate(this.settings.promptTemplate, now, reviewWindow.ms, reviewWindow.label)
+			: '';
+		const file = await this.writeNote(prompt ? `${prompt}\n\n${md}` : md);
 			// The folder may have just been created by writeNote — make sure it's excluded.
 			this.syncSearchExclusion();
 			// Let the clock reach a comfortable minimum before dismissing.
