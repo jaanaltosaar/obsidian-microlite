@@ -11,6 +11,7 @@ import {
 	isOwnOutput,
 	mergeCurrentContent,
 	normalizeForCompare,
+	renderPreamble,
 	renderReview,
 	resolveRenames,
 	type SnapshotsByPath,
@@ -151,7 +152,8 @@ export default class MicroliteHunksPlugin extends Plugin {
 				newPaths,
 			});
 
-			const file = await this.writeNote(md);
+			const preamble = renderPreamble(this.settings.reviewPreamble, now, reviewWindow.ms, reviewWindow.label);
+		const file = await this.writeNote(preamble ? `${preamble}\n\n${md}` : md);
 			// The folder may have just been created by writeNote — make sure it's excluded.
 			this.syncSearchExclusion();
 			// Let the clock reach a comfortable minimum before dismissing.
@@ -163,8 +165,9 @@ export default class MicroliteHunksPlugin extends Plugin {
 		} catch (err) {
 			window.clearInterval(clock);
 			console.error('Microlite Hunks: generation failed', err);
-			notice.setMessage('Microlite: generation failed — see console for details.');
-			window.setTimeout(() => notice.hide(), 6000);
+			const detail = err instanceof Error ? err.message : String(err);
+			notice.setMessage(`Microlite: generation failed — ${detail} (full stack in the console).`);
+			window.setTimeout(() => notice.hide(), 12000);
 		}
 	}
 

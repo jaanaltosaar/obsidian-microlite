@@ -15,12 +15,43 @@ export interface MicroliteHunksSettings {
 	/** Keep the output folder in Obsidian's "Excluded files" so review notes stay out of search. */
 	excludeFromSearch: boolean;
 	/**
+	 * Optional markdown prepended to every generated note (blank = none). Supports the placeholders
+	 * {{time}}, {{date}}, {{window}} and {{window_start}}. Use it to lead the note with a journaling
+	 * scaffold and an LLM system prompt so it's ready to fill in and paste.
+	 */
+	reviewPreamble: string;
+	/**
 	 * The exact filter string we last wrote into `userIgnoreFilters`. Lets us remove only our own
 	 * entry (never the user's) when the output folder is renamed or the toggle is turned off.
 	 * Internal bookkeeping — not shown in the settings UI.
 	 */
 	appliedIgnoreFilter: string;
 }
+
+/**
+ * Shipped default for {@link MicroliteHunksSettings.reviewPreamble}: a fill-in-the-blank journaling
+ * scaffold plus an ACT-therapist prompt, so a fresh install produces a note that's ready to complete
+ * and paste. The leading HTML comment is hidden in reading view but carries the opt-out. Built by
+ * array-join so no source-trailing-whitespace lint fights the intentional trailing spaces on the
+ * answer lines. Clear the field in settings for the plain review note.
+ */
+const DEFAULT_REVIEW_PREAMBLE = [
+	'<!-- Microlite review preamble. To turn this off, clear the "Review preamble" field in Settings → Community plugins → Microlite. -->',
+	'',
+	"I've attached the last {{window}} of Obsidian hunks from Microlite below, with some overlap with your previous context around {{window_start}} (it is now {{time}} on {{date}}).",
+	'',
+	"This upcoming week I'm ",
+	'',
+	'Tomorrow I hope to ',
+	'',
+	'Today I hope to ',
+	'',
+	'Emotionally, ',
+	'',
+	'As an expert in Acceptance and Commitment Therapy and psychometric profiling from a clinical-psychology lens, provide stances to practice for the upcoming week. Keep it irreverent where appropriate, and circumscribe what to hold loosely, how to approach what is on my mind, and logistics or operations in the upcoming days such as summarizing any open loops.',
+	'',
+	'---',
+].join('\n');
 
 export const DEFAULT_SETTINGS: MicroliteHunksSettings = {
 	defaultDays: 7,
@@ -29,6 +60,7 @@ export const DEFAULT_SETTINGS: MicroliteHunksSettings = {
 	fullBelow: 0,
 	syncThreshold: 4,
 	excludeFromSearch: true,
+	reviewPreamble: DEFAULT_REVIEW_PREAMBLE,
 	appliedIgnoreFilter: '',
 };
 
@@ -106,6 +138,26 @@ export class MicroliteHunksSettingTab extends PluginSettingTab {
 					this.plugin.syncSearchExclusion();
 				}),
 			);
+
+		new Setting(containerEl)
+			.setName('Review preamble')
+			.setDesc(
+				'Optional markdown prepended to every generated note. Leave blank for none. ' +
+					'Placeholders: {{time}}, {{date}}, {{window}} (e.g. "7 days"), {{window_start}} ' +
+					'(the date the window opened). Use it to lead the note with a journaling scaffold ' +
+					'and an LLM prompt, ready to fill in and paste.',
+			)
+			.addTextArea((text) => {
+				text
+					.setPlaceholder('I\'ve attached the last {{window}} of Obsidian hunks…')
+					.setValue(s.reviewPreamble)
+					.onChange(async (value) => {
+						s.reviewPreamble = value;
+						await save();
+					});
+				text.inputEl.rows = 8;
+				text.inputEl.addClass('microlite-preamble-input');
+			});
 
 		intSetting(
 			containerEl,

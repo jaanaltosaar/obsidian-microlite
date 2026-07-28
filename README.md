@@ -55,9 +55,35 @@ output folder from search** setting.
    from the command palette. A dated review note opens; paste it into your LLM.
 
 Settings let you change the default window, output folder, diff context, the full-content threshold,
-the bulk-sync threshold, and whether the output folder is excluded from search.
+the bulk-sync threshold, whether the output folder is excluded from search, and an optional **review
+preamble**.
 
 Works on **desktop and mobile** — it reads File Recovery in-process, no external tools required.
+
+### Review preamble — turn hunks into a journaling prompt
+
+Obsidian's own Templates can't run a plugin command, so Microlite bakes this in instead: every
+generated note leads with the **Review preamble** — a fill-in-the-blank scaffold plus an LLM prompt,
+ready to complete and paste. It ships with a journaling + Acceptance-and-Commitment-Therapy default;
+edit it, or clear it, in settings. Four placeholders are substituted at generation time:
+
+| Placeholder        | Renders as                                    |
+| ------------------ | --------------------------------------------- |
+| `{{time}}`         | current time, e.g. `3:42 PM`                  |
+| `{{date}}`         | today, e.g. `Sunday, July 27, 2026`           |
+| `{{window}}`       | the window's label, e.g. `7 days`             |
+| `{{window_start}}` | the date the window opened (`now − window`)   |
+
+For example:
+
+> I've attached the last `{{window}}` of Obsidian hunks from Microlite below, with some overlap with
+> your previous context around `{{window_start}}` (it is now `{{time}}` on `{{date}}`).
+>
+> This upcoming week I'm … / Tomorrow I hope to … / Today I hope to … / Emotionally …
+>
+> As an expert in Acceptance and Commitment Therapy, provide stances to practice for the week …
+
+Clear the field for a plain review note with no preamble.
 
 ## Prefer no plugin? Use the script.
 
@@ -95,21 +121,10 @@ Canonical copy for the [community.obsidian.md](https://obsidian.md/plugins) list
 > Turn a week of edits across all your notes into one LLM-ready review — like "track changes" for
 > your whole vault, ready to paste into Claude or ChatGPT.
 
-**Long description (community website)** — 783 / 1000 characters:
-
-> Microlite reads Obsidian's File Recovery snapshots and writes one dated note that shows only the
-> lines you changed this week: a per-day activity table, then heading-aware diffs, newest first. It
-> handles the messy parts — bulk syncs, renamed notes, live content folded in, and notes you merely
-> opened dropped.
->
-> Hand that single note to Claude or ChatGPT instead of your whole vault. The model sees only what
-> moved, so it connects ideas across notes on its own. Edit a project plan on Monday and a journal
-> entry on Thursday, and the model surfaces the thread between them — no manual [[links]] needed.
-> You skip the work of curating context and lower the cognitive load of writing, so insight arrives
-> faster.
->
-> No other tool does this today, apart from a cumbersome manual Python script.
-
 ## License
 
 MIT
+
+## Contact
+
+Questions, issues, or feedback: [jaan.li@jaan.li](mailto:jaan.li@jaan.li)
