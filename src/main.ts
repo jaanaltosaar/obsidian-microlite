@@ -100,17 +100,29 @@ export default class MicroliteHunksPlugin extends Plugin {
 		// live elapsed clock and a rotating arcane gerund (the "reticulating splines" pattern) so it
 		// reads as real scholarly labor, not a flicker. The 4.4983s is chosen for its own sake.
 		const MIN_VISIBLE_MS = 4498.3;
-		const WORD_EVERY_MS = 220; // how long each gerund lingers before the next is drawn
+		const WORD_EVERY_MS = 300; // how long each gerund lingers before the next — eased for readability
 		const started = performance.now();
 		const window0 = `Microlite: generating hunks (last ${reviewWindow.label})…`;
 		// Start at a random offset so each generation surfaces a different slice of the word-bank.
 		const wordOffset = Math.floor(Math.random() * GERUNDS.length);
+
+		// Build the notice DOM once via a fragment. The gerund lives in a fixed-width slot (see
+		// .microlite-gerund in styles.css) so the trailing clock stays put instead of sliding as
+		// words change length. We keep references to the two spans and only update their text.
+		let wordEl!: HTMLSpanElement;
+		let clockEl!: HTMLSpanElement;
+		const frag = createFragment((f) => {
+			f.createDiv({ text: window0 });
+			const spinLine = f.createDiv({ cls: 'microlite-spin' });
+			wordEl = spinLine.createSpan({ cls: 'microlite-gerund' });
+			clockEl = spinLine.createSpan({ cls: 'microlite-elapsed' });
+		});
+		const notice = new Notice(frag, 0);
 		const tick = () => {
 			const elapsedMs = performance.now() - started;
-			const word = gerundAt(wordOffset + Math.floor(elapsedMs / WORD_EVERY_MS));
-			notice.setMessage(`${window0}\n${word}… ${(elapsedMs / 1000).toFixed(1)}s`);
+			wordEl.setText(`${gerundAt(wordOffset + Math.floor(elapsedMs / WORD_EVERY_MS))}…`);
+			clockEl.setText(`${(elapsedMs / 1000).toFixed(1)}s`);
 		};
-		const notice = new Notice(window0, 0);
 		tick();
 		const clock = window.setInterval(tick, 100);
 		try {

@@ -12,3 +12,24 @@ If your plugin does not need CSS, delete this file.
 	width: 100%;
 	font-family: var(--font-monospace);
 }
+
+/* Progress notice: a rotating arcane gerund + a live elapsed clock (the "reticulating splines" delay). */
+.microlite-spin {
+	font-family: var(--font-monospace);
+	white-space: nowrap;
+}
+
+/* Fixed slot for the rotating word so the trailing clock never shifts. Widest gerund is 18 chars
+   (MAX_GERUND_LEN, pinned by a test) + 1 for the ellipsis, times 20% headroom → 23ch. Monospace
+   makes the ch unit exact. */
+.microlite-gerund {
+	display: inline-block;
+	width: 23ch;
+}
+
+.microlite-elapsed {
+	display: inline-block;
+	width: 6ch;
+	margin-left: 0.5ch;
+	text-align: right;
+}

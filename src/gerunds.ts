@@ -78,6 +78,14 @@ export const GERUNDS: readonly string[] = Object.freeze([
 ]);
 
 /**
+ * Length of the longest gerund, in characters. The progress notice reserves a fixed-width slot for
+ * the rotating word (see `.microlite-gerund` in styles.css) so the trailing clock never jitters;
+ * that slot's width is derived from this value. A test pins it, so growing the bank past the slot
+ * width fails loudly instead of silently reintroducing the jitter.
+ */
+export const MAX_GERUND_LEN = Math.max(...GERUNDS.map((w) => w.length));
+
+/**
  * The gerund shown at a given rotation step, capitalized for the head of a notice line.
  * `step` may be any integer (including a random start offset) — it wraps around the bank.
  */
