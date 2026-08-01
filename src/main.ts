@@ -5,6 +5,7 @@ import {
 	MicroliteHunksSettingTab,
 } from './settings';
 import { MICROLITE_ICON_ID, MICROLITE_ICON_SVG } from './icon';
+import { GERUNDS, gerundAt } from './gerunds';
 import { readSnapshots } from './recovery';
 import {
 	groupByPath,
@@ -95,15 +96,23 @@ export default class MicroliteHunksPlugin extends Plugin {
 
 	/** Read File Recovery, render the review, write & open microlite-hunks-YYYY-MM-DD.md. */
 	async generate(reviewWindow: ReviewWindow): Promise<void> {
-		// Generation is often near-instant; keep the notice on screen for a pleasant minimum with a
-		// live elapsed clock (the "deliberate delay" pattern) so it reads as real work, not a flicker.
-		const MIN_VISIBLE_MS = 1200;
+		// Generation is often near-instant; keep the notice on screen for a deliberate minimum with a
+		// live elapsed clock and a rotating arcane gerund (the "reticulating splines" pattern) so it
+		// reads as real scholarly labor, not a flicker. The 4.4983s is chosen for its own sake.
+		const MIN_VISIBLE_MS = 4498.3;
+		const WORD_EVERY_MS = 220; // how long each gerund lingers before the next is drawn
 		const started = performance.now();
-		const label = `Microlite: generating hunks (last ${reviewWindow.label})…`;
-		const notice = new Notice(`${label} 0.0s`, 0);
-		const clock = window.setInterval(() => {
-			notice.setMessage(`${label} ${((performance.now() - started) / 1000).toFixed(1)}s`);
-		}, 100);
+		const window0 = `Microlite: generating hunks (last ${reviewWindow.label})…`;
+		// Start at a random offset so each generation surfaces a different slice of the word-bank.
+		const wordOffset = Math.floor(Math.random() * GERUNDS.length);
+		const tick = () => {
+			const elapsedMs = performance.now() - started;
+			const word = gerundAt(wordOffset + Math.floor(elapsedMs / WORD_EVERY_MS));
+			notice.setMessage(`${window0}\n${word}… ${(elapsedMs / 1000).toFixed(1)}s`);
+		};
+		const notice = new Notice(window0, 0);
+		tick();
+		const clock = window.setInterval(tick, 100);
 		try {
 			// Always exclude our own generated review notes so hunks never feed back on themselves.
 			const records = (await readSnapshots(this.app)).filter(
